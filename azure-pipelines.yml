@@ -1,0 +1,48 @@
+variables:
+- group: cr-variables
+- ${{ if eq(variables['Build.SourceBranchName'], 'cibc-dev') }}:
+  - group: cr-variables-cibc-dev
+- ${{ elseif eq(variables['Build.SourceBranchName'], 'cibc-sit') }}:
+  - group: cr-variables-cibc-sit
+- ${{ elseif eq(variables['Build.SourceBranchName'], 'cibc-dev2e') }}:
+  - group: cr-variables-cibc-dev2e
+- ${{ elseif eq(variables['Build.SourceBranchName'], 'cibc-sit2e') }}:
+  - group: cr-variables-cibc-sit2e
+
+pool:
+  name: dcore-build
+
+steps:
+- script: |
+    echo "***** env *****"
+    env
+    echo "***** pwd *****"
+    pwd
+    echo "***** ls -al *****"
+    ls -al
+    echo "***** java -version *****"
+    java -version
+    echo "***** mvn -version *****"
+    mvn -version
+  displayName: 'Check LINUX Environment'
+
+- script: |
+    set -e
+    set -x
+    export PROJECT_NAME=workflow-$( cat pom.xml | grep -m 1 '<name>' | sed 's/\s*<name>//g' | sed 's/<\/name>//g' )
+    export VERSION=$(workflow-ebit-version)
+    export PUBLISH_MAVEN_REPO_URL=$(publish-maven-repo-url)
+    sed -i -E '0,/<artifactId>/s#<artifactId>.+</artifactId>#<artifactId>'"$PROJECT_NAME"'</artifactId>#' pom.xml
+    sed -i -E '0,/<version>/s#<version>.+</version>#<version>'"$VERSION"'</version>#' pom.xml
+    sed -i '$i\  <distributionManagement><snapshotRepository><id>simplii</id><name>simplii</name><url>'"$PUBLISH_MAVEN_REPO_URL"'</url></snapshotRepository></distributionManagement>' pom.xml
+  displayName: 'patch pom.xml'
+
+- script: |
+    set -x
+    mvn deploy \
+      -Djbpm.enable.multi.con=true \
+      -Dmaven.repo.id=simplii \
+      -Dmaven.repo.username=$(publish-maven-repo-login-id) \
+      -Dmaven.repo.password=$(publish-maven-repo-login-pw)
+  displayName: 'mvn deploy'
+  condition: succeeded()
