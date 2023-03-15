@@ -15,6 +15,16 @@
     ],
 
     [
+        "name" : "WaitTask",
+        "displayName" : "WaitTask",
+        "category" : "jbpm-workitems-bpmn2",
+        "description" : "",
+        "defaultHandler" : "mvel: new org.jbpm.bpmn2.handler.ReceiveTaskHandler()",
+        "documentation" : "jbpm-workitems-bpmn2/index.html",
+        "icon" : "defaultbusinessruletaskicon.png"
+    ],
+
+    [
         "name" : "DecisionTask",
         "displayName" : "Decision Task",
         "category" : "jbpm-workitems-bpmn2",
